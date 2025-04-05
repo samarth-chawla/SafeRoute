@@ -1,0 +1,197 @@
+// import { useState } from 'react';
+// import { Navigation } from 'lucide-react';
+
+// export const RouteForm = ({
+//   onRouteSubmit,
+//   useCurrentLocation,
+//   onUseCurrentLocationChange,
+// }) => {
+//   const [destination, setDestination] = useState('');
+//   const [currentLocation, setCurrentLocation] = useState(null);
+
+//   const handleSubmit = async (e) => {
+//     e.preventDefault();
+    
+//     try {
+//       if (useCurrentLocation) {
+//         navigator.geolocation.getCurrentPosition(
+//           (position) => {
+//             const startPoint = {
+//               lat: position.coords.latitude,
+//               lng: position.coords.longitude
+//             };
+//             // For demo purposes, using a fixed destination point
+//             const endPoint = {
+//               lat: 28.6219,
+//               lng: 77.2189
+//             };
+//             onRouteSubmit(startPoint, endPoint);
+//           },
+//           (error) => {
+//             console.error('Error getting location:', error);
+//             alert('Could not get your current location. Please try again.');
+//           }
+//         );
+//       } else {
+//         // Use default starting point if not using current location
+//         const startPoint = { lat: 28.6139, lng: 77.2090 };
+//         const endPoint = { lat: 28.6219, lng: 77.2189 };
+//         onRouteSubmit(startPoint, endPoint);
+//       }
+//     } catch (error) {
+//       console.error('Error planning route:', error);
+//       alert('Error planning route. Please try again.');
+//     }
+//   };
+
+//   return (
+//     <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-white rounded-lg shadow">
+//       <div>
+//         <label className="flex items-center space-x-2">
+//           <input
+//             type="checkbox"
+//             checked={useCurrentLocation}
+//             onChange={(e) => onUseCurrentLocationChange(e.target.checked)}
+//             className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+//           />
+//           <span className="text-sm text-gray-700">Use my current location as starting point</span>
+//         </label>
+//       </div>
+
+//       <div>
+//         <label className="block text-sm font-medium text-gray-700">Destination</label>
+//         <input
+//           type="text"
+//           value={destination}
+//           onChange={(e) => setDestination(e.target.value)}
+//           placeholder="Enter destination"
+//           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+//           required
+//         />
+//       </div>
+
+//       <button
+//         type="submit"
+//         className="w-full flex justify-center items-center gap-2 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+//       >
+//         <Navigation size={20} />
+//         Plan Safe Route
+//       </button>
+//     </form>
+//   );
+// };
+import { useState } from 'react';
+import { Navigation } from 'lucide-react';
+
+export const RouteForm = ({
+  onRouteSubmit,
+  useCurrentLocation,
+  onUseCurrentLocationChange,
+}) => {
+  const [startLocation, setStartLocation] = useState('');
+  const [destinationLocation, setDestinationLocation] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const geocodeLocation = async (locationName) => {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationName)}`
+    );
+    const data = await response.json();
+    if (data.length === 0) throw new Error(`No results for "${locationName}"`);
+    return {
+      lat: parseFloat(data[0].lat),
+      lng: parseFloat(data[0].lon),
+    };
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      let startPoint;
+
+      if (useCurrentLocation) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            startPoint = {
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+            };
+            const endPoint = await geocodeLocation(destinationLocation);
+            onRouteSubmit(startPoint, endPoint);
+            setLoading(false);
+          },
+          (error) => {
+            console.error('Error getting location:', error);
+            alert('Could not get your current location.');
+            setLoading(false);
+          }
+        );
+      } else {
+        const [startPoint, endPoint] = await Promise.all([
+          geocodeLocation(startLocation),
+          geocodeLocation(destinationLocation),
+        ]);
+        onRouteSubmit(startPoint, endPoint);
+      }
+    } catch (error) {
+      console.error('Error planning route:', error);
+      alert('Could not find one or both of the locations.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-white rounded-lg shadow">
+      <div>
+        <label className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            checked={useCurrentLocation}
+            onChange={(e) => onUseCurrentLocationChange(e.target.checked)}
+            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          <span className="text-sm text-gray-700">Use my current location as starting point</span>
+        </label>
+      </div>
+
+      {!useCurrentLocation && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Start Location</label>
+          <input
+            type="text"
+            value={startLocation}
+            onChange={(e) => setStartLocation(e.target.value)}
+            placeholder="e.g., Connaught Place, Delhi"
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            required
+          />
+        </div>
+      )}
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Destination</label>
+        <input
+          type="text"
+          value={destinationLocation}
+          onChange={(e) => setDestinationLocation(e.target.value)}
+          placeholder="e.g., India Gate, Delhi"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          required
+        />
+      </div>
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full flex justify-center items-center gap-2 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+      >
+        <Navigation size={20} />
+        {loading ? 'Planning Route...' : 'Plan Safe Route'}
+      </button>
+    </form>
+  );
+};
+
