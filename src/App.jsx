@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import { Map } from './components/Map';
 import { ReportForm } from './components/ReportForm';
 import { RouteForm } from './components/RouteForm';
@@ -6,11 +6,17 @@ import { mockReports } from './data/mockData';
 import { Navigation, FileText, PlusCircle } from 'lucide-react';
 
 function App() {
-  const [reports, setReports] = useState(mockReports);
+  const [reports, setReports] = useState([]);
   const [activeTab, setActiveTab] = useState('reports');
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [routePoints, setRoutePoints] = useState({});
   const [useCurrentLocation, setUseCurrentLocation] = useState(false);
+  useEffect(() => {
+      fetch('/api/reportsDetails')
+        .then(res => res.json())
+        .then(data => setReports(data))
+        .catch(err => console.error('Failed to fetch reports:', err));
+    }, []);
 
   const handleReportSubmit = (report) => {
     const newReport = {
@@ -91,9 +97,9 @@ function App() {
                   <div className="flex items-center justify-between">
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        report.category === 'danger'
+                        report.category.toLowerCase() === 'danger'
                           ? 'bg-red-100 text-red-800'
-                          : report.category === 'caution'
+                          : report.category.toLowerCase() === 'caution'
                           ? 'bg-yellow-100 text-yellow-800'
                           : 'bg-green-100 text-green-800'
                       }`}
@@ -101,7 +107,7 @@ function App() {
                       {report.category}
                     </span>
                     <span className="text-sm text-gray-500">
-                      {new Date(report.timestamp).toLocaleString()}
+                      {new Date(report.date).toISOString().split("T")[0] } {report.time}   
                     </span>
                   </div>
                   <p className="text-gray-700">{report.description}</p>
