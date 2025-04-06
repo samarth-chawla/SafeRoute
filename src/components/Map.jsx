@@ -111,7 +111,7 @@ const getPointToLineDistance = (point, lineStart, lineEnd) => {
   return dxt;
 };
 
-const isPointNearPolyline = (point, coordinates, tolerance = 200) => { // Changed tolerance to 200 meters
+const isPointNearPolyline = (point, coordinates, tolerance = 400) => { // Changed tolerance to 400 meters
   for (let i = 0; i < coordinates.length - 1; i++) {
     const distance = getPointToLineDistance(
       point,
