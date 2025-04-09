@@ -1,5 +1,5 @@
 import { useState,useEffect } from 'react';
-import { Map } from './components/Map';
+import  Map  from './components/Map';
 import { ReportForm } from './components/ReportForm';
 import { RouteForm } from './components/RouteForm';
 import { mockReports } from './data/mockData';
