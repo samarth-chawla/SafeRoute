@@ -3,7 +3,6 @@ import cors from 'cors';
 import pkg from 'pg';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
-import serverless from 'serverless-http';
 
 dotenv.config();
 
@@ -13,7 +12,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: *,
+    origin: '*',
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     credentials: true,
   })
@@ -91,5 +90,8 @@ app.post('/api/submitReport', async (req, res) => {
   }
 });
 
-// No app.listen on Vercel
-export const handler = serverless(app);
+// ✅ Listen on a port (REQUIRED for Render)
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
