@@ -7,16 +7,23 @@ const { Pool } = pkg;
 
 const app = express();
 const port = 5000;
+env.config();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    credentials: true,
+  })
+);
 app.use(bodyParser.json());
 
 const pool = new Pool({
-  user: 'postgres',
-  host: 'localhost',
-  database: "SafeRoute",
-  password: '123456789',
-  port: 5432,
+  user: process.env.PG_USER,
+  host: process.env.PG_HOST,
+  database: process.env.PG_DATABASE,
+  password: process.env.PG_PASSWORD,
+  port: process.env.PG_PORT,
 });
 
 pool.connect()
